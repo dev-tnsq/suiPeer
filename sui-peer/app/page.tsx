@@ -11,38 +11,7 @@ import { StatCard } from "@/components/stat-card"
 export default function Home() {
   return (
     <div className="flex min-h-screen flex-col">
-      {/* Navigation */}
-      <header className="sticky top-0 z-50 w-full border-b bg-background/80 backdrop-blur-sm">
-        <div className="container flex h-16 items-center justify-between">
-          <div className="flex items-center gap-6">
-            <Link href="/" className="flex items-center gap-2">
-              <div className="relative size-8 overflow-hidden rounded-full bg-gradient-to-br from-teal-500 to-blue-600">
-                <div className="absolute inset-0 flex items-center justify-center text-white">SP</div>
-              </div>
-              <span className="text-xl font-bold">SuiPeer</span>
-            </Link>
-            <nav className="hidden md:flex gap-6">
-              <Link href="#features" className="text-sm font-medium text-muted-foreground hover:text-foreground">
-                Features
-              </Link>
-              <Link href="#how-it-works" className="text-sm font-medium text-muted-foreground hover:text-foreground">
-                How It Works
-              </Link>
-              <Link href="#testimonials" className="text-sm font-medium text-muted-foreground hover:text-foreground">
-                Testimonials
-              </Link>
-            </nav>
-          </div>
-          <div className="flex items-center gap-4">
-            <div className="hidden md:flex">
-              <ConnectWalletButton />
-            </div>
-            <Button asChild>
-              <Link href="/register">Get Started</Link>
-            </Button>
-          </div>
-        </div>
-      </header>
+  
 
       <main className="flex-1">
         {/* Hero Section */}
