@@ -7,6 +7,7 @@ import { CheckCircle, ArrowRight, FileText, Users, Shield, Award, Lock, Wallet, 
 import { ConnectWalletButton } from "@/components/connect-wallet-button"
 import { FeatureCard } from "@/components/feature-card"
 import { StatCard } from "@/components/stat-card"
+import { ResearchMetricsCard } from "@/components/research-metrics-card"
 
 export default function Home() {
   return (
@@ -15,9 +16,9 @@ export default function Home() {
 
       <main className="flex-1">
         {/* Hero Section */}
-        <section className="relative overflow-hidden bg-black py-20 md:py-32">
+        {/* <section className="relative overflow-hidden bg-blue-950 py-20 md:py-32">
           <div className="absolute inset-0 bg-grid-white/[0.1] bg-[length:16px_16px]" />
-          <div className="absolute inset-0 bg-gradient-to-r from-black via-transparent to-teal-950/20"></div>
+          <div className="absolute inset-0 bg-gradient-to-r from-blue-950 via-blue-900/80 to-teal-800/20"></div>
           <div className="container relative">
             <div className="grid gap-10 md:grid-cols-2 md:gap-16">
               <div className="flex flex-col justify-center space-y-6">
@@ -109,6 +110,60 @@ export default function Home() {
                     height={600}
                     className="w-full rounded-lg shadow-2xl border border-gray-800"
                   />
+                </div>
+              </div>
+            </div>
+          </div>
+        </section> */}
+
+<section className="relative overflow-hidden bg-gradient-to-b from-background to-background/80 py-20 md:py-32">
+          <div className="absolute inset-0 bg-grid-small-white/[0.2] bg-[length:16px_16px]" />
+          <div className="container relative">
+            <div className="grid gap-10 md:grid-cols-2 md:gap-16">
+              <div className="flex flex-col justify-center space-y-8">
+                <div className="space-y-6">
+                  <Badge className="inline-flex bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-300">
+                    Backed by $10M in funding
+                  </Badge>
+                  <h1 className="text-4xl font-bold tracking-tight sm:text-5xl md:text-6xl lg:text-7xl">
+                    Decentralized Research Platform for{" "}
+                    <span className="bg-gradient-to-r from-purple-600 to-blue-600 bg-clip-text text-transparent">
+                      Academic Excellence
+                    </span>
+                  </h1>
+                  <p className="max-w-[600px] text-xl text-muted-foreground">
+                    SuiPeer enables anonymous, verifiable research publication and peer review, powered by Sui
+                    blockchain technology.
+                  </p>
+                </div>
+                <div className="flex flex-col gap-4 sm:flex-row">
+                  <Button size="lg" asChild>
+                    <Link href="/register">
+                      Join SuiPeer <ArrowRight className="ml-2 h-4 w-4" />
+                    </Link>
+                  </Button>
+                  <Button size="lg" variant="outline" asChild>
+                    <Link href="#how-it-works">Learn How It Works</Link>
+                  </Button>
+                </div>
+                <div className="flex flex-wrap items-center gap-x-8 gap-y-4 text-sm text-muted-foreground">
+                  <div className="flex items-center gap-2">
+                    <CheckCircle className="h-4 w-4 text-green-500" />
+                    <span>Anonymous Publishing</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <CheckCircle className="h-4 w-4 text-green-500" />
+                    <span>Verified Credentials</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <CheckCircle className="h-4 w-4 text-green-500" />
+                    <span>Blockchain Secured</span>
+                  </div>
+                </div>
+              </div>
+              <div className="relative flex items-center justify-center">
+                <div className="relative w-full overflow-hidden rounded-xl border bg-background/50 p-2 shadow-xl backdrop-blur">
+                  <ResearchMetricsCard />
                 </div>
               </div>
             </div>
