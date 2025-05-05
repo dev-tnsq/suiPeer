@@ -236,4 +236,91 @@ module suipeer::zk_verification {
         assert!(verifier.admin == tx_context::sender(ctx), EUnauthorizedVerifier);
         verifier.admin = new_admin;
     }
+    
+    // === Test-only functions ===
+    
+    #[test_only]
+    /// Initialize the verifier for testing
+    public fun test_init(ctx: &mut TxContext) {
+        init(ctx)
+    }
+    
+    #[test_only]
+    /// Test version of verify_researcher_credentials that bypasses actual cryptographic verification
+    public fun test_verify_researcher_credentials(
+        verifier: &ZKProofVerifier,
+        proof: vector<u8>,
+        public_inputs: vector<u8>,
+        ctx: &mut TxContext
+    ): bool {
+        // Validate inputs
+        assert!(!vector::is_empty(&proof), EInvalidProof);
+        assert!(!vector::is_empty(&public_inputs), EInvalidPublicInputs);
+        
+        // For testing, we just check if the proof has sufficient length
+        // In a real implementation, this would use cryptographic verification
+        let is_valid = vector::length(&proof) >= 32;
+        
+        if (is_valid) {
+            event::emit(CredentialProofVerified {
+                prover: tx_context::sender(ctx),
+                credential_type: PROOF_TYPE_RESEARCHER_CREDENTIAL,
+                timestamp: tx_context::epoch(ctx)
+            });
+        };
+        
+        is_valid
+    }
+    
+    #[test_only]
+    /// Test version of verify_reviewer_qualification that bypasses actual cryptographic verification
+    public fun test_verify_reviewer_qualification(
+        verifier: &ZKProofVerifier,
+        proof: vector<u8>,
+        public_inputs: vector<u8>,
+        ctx: &mut TxContext
+    ): bool {
+        // Validate inputs
+        assert!(!vector::is_empty(&proof), EInvalidProof);
+        assert!(!vector::is_empty(&public_inputs), EInvalidPublicInputs);
+        
+        // For testing, we just check if the proof has sufficient length
+        let is_valid = vector::length(&proof) >= 32;
+        
+        if (is_valid) {
+            event::emit(ReviewerProofVerified {
+                prover: tx_context::sender(ctx),
+                paper_id: public_inputs,
+                timestamp: tx_context::epoch(ctx)
+            });
+        };
+        
+        is_valid
+    }
+    
+    #[test_only]
+    /// Test version of verify_anonymous_review that bypasses actual cryptographic verification
+    public fun test_verify_anonymous_review(
+        verifier: &ZKProofVerifier,
+        proof: vector<u8>,
+        public_inputs: vector<u8>,
+        ctx: &mut TxContext
+    ): bool {
+        // Validate inputs
+        assert!(!vector::is_empty(&proof), EInvalidProof);
+        assert!(!vector::is_empty(&public_inputs), EInvalidPublicInputs);
+        
+        // For testing, we just check if the proof has sufficient length
+        let is_valid = vector::length(&proof) >= 32;
+        
+        if (is_valid) {
+            event::emit(CredentialProofVerified {
+                prover: tx_context::sender(ctx),
+                credential_type: PROOF_TYPE_ANONYMOUS_REVIEW,
+                timestamp: tx_context::epoch(ctx)
+            });
+        };
+        
+        is_valid
+    }
 }

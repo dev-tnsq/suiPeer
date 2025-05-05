@@ -6,6 +6,8 @@ import { ThemeProvider } from "@/components/theme-provider"
 import { WalletProvider } from "@/components/wallet-provider"
 import { Toaster } from "@/components/ui/toaster"
 import Header from "@/components/header"
+import { Providers } from './providers'
+import '@mysten/dapp-kit/dist/index.css'
 
 const inter = Inter({ subsets: ["latin"] })
 
@@ -23,15 +25,17 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body className={inter.className}>
-        <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
-          <WalletProvider>
-            <div className="flex min-h-screen flex-col">
-              <Header />
-              <main className="flex-1">{children}</main>
-            </div>
-            <Toaster />
-          </WalletProvider>
-        </ThemeProvider>
+        <Providers>
+          <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
+            <WalletProvider>
+              <div className="flex min-h-screen flex-col">
+                <Header />
+                <main className="flex-1">{children}</main>
+              </div>
+              <Toaster />
+            </WalletProvider>
+          </ThemeProvider>
+        </Providers>
       </body>
     </html>
   )
