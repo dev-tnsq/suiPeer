@@ -51,8 +51,9 @@ module suipeer::zk_verification {
     fun init(ctx: &mut TxContext) {
         let sender = tx_context::sender(ctx);
         
-        // In a real implementation, these would be actual verification keys
-        // generated from a trusted setup ceremony for the specific circuits
+        // These verification keys would normally be generated from the ZK circuit compilation
+        // For now, we're using placeholder values that will be updated after deployment
+        // with the actual verification keys from the ZK circuits
         let researcher_vk = x"1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef";
         let reviewer_vk = x"abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890";
         let anonymous_vk = x"7890abcdef1234567890abcdef1234567890abcdef1234567890abcdef123456";
@@ -248,7 +249,7 @@ module suipeer::zk_verification {
     #[test_only]
     /// Test version of verify_researcher_credentials that bypasses actual cryptographic verification
     public fun test_verify_researcher_credentials(
-        verifier: &ZKProofVerifier,
+        _verifier: &ZKProofVerifier,
         proof: vector<u8>,
         public_inputs: vector<u8>,
         ctx: &mut TxContext
@@ -275,7 +276,7 @@ module suipeer::zk_verification {
     #[test_only]
     /// Test version of verify_reviewer_qualification that bypasses actual cryptographic verification
     public fun test_verify_reviewer_qualification(
-        verifier: &ZKProofVerifier,
+        _verifier: &ZKProofVerifier,
         proof: vector<u8>,
         public_inputs: vector<u8>,
         ctx: &mut TxContext
@@ -301,7 +302,7 @@ module suipeer::zk_verification {
     #[test_only]
     /// Test version of verify_anonymous_review that bypasses actual cryptographic verification
     public fun test_verify_anonymous_review(
-        verifier: &ZKProofVerifier,
+        _verifier: &ZKProofVerifier,
         proof: vector<u8>,
         public_inputs: vector<u8>,
         ctx: &mut TxContext

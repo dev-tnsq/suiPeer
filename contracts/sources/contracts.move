@@ -5,7 +5,6 @@ module suipeer::platform {
     use sui::coin::{Self, Coin};
     use sui::sui::SUI;
     use sui::balance::{Self, Balance};
-   
     use sui::event;
     use sui::package;
     use sui::display;
