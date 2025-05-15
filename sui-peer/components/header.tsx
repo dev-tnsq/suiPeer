@@ -28,6 +28,7 @@ export default function Header() {
     { href: "/dashboard", label: "Dashboard" },
     { href: "/proposals", label: "Proposals" },
     { href: "/researchers", label: "Researchers" },
+    { href: "/zk-verification", label: "ZK Verification" },
   ]
 
   return (
@@ -208,6 +209,16 @@ export default function Header() {
                   )}
                 >
                   Blockchain Integration
+                </Link>
+                <Link
+                  href="/zk-verification"
+                  onClick={() => setIsOpen(false)}
+                  className={cn(
+                    "text-lg font-medium transition-colors hover:text-teal-500",
+                    pathname === "/zk-verification" ? "text-teal-500" : "text-foreground",
+                  )}
+                >
+                  ZK Verification
                 </Link>
               </nav>
             </SheetContent>

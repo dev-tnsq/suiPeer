@@ -1,88 +1,57 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { BookOpen, Calendar, FileText, FilePlus, MessageSquare, Search, Star, User } from "lucide-react"
+import { BookOpen, Calendar, FileText, FilePlus, MessageSquare, Search, Star, User, Loader2 } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-
-// Mock data for proposals
-const proposals = [
-  {
-    id: "prop-1",
-    title: "Decentralized Consensus Mechanisms in Blockchain Networks",
-    abstract:
-      "This paper explores various consensus mechanisms used in blockchain networks, comparing their efficiency, security, and scalability characteristics.",
-    author: "Anonymous",
-    date: "2023-12-15",
-    status: "Published",
-    reviews: 4,
-    score: 8.5,
-    field: "Blockchain",
-    citations: 12,
-  },
-  {
-    id: "prop-2",
-    title: "Zero-Knowledge Proofs for Privacy-Preserving Authentication",
-    abstract:
-      "A comprehensive analysis of zero-knowledge proof systems and their applications in privacy-preserving authentication protocols.",
-    author: "Anonymous",
-    date: "2024-02-20",
-    status: "Under Review",
-    reviews: 2,
-    score: 7.0,
-    field: "Cryptography",
-    citations: 0,
-  },
-  {
-    id: "prop-3",
-    title: "Scalability Solutions for Next-Generation Blockchain Platforms",
-    abstract:
-      "This research examines layer-2 scaling solutions and their impact on transaction throughput and network decentralization.",
-    author: "Anonymous",
-    date: "2024-03-10",
-    status: "Under Review",
-    reviews: 1,
-    score: 6.5,
-    field: "Blockchain",
-    citations: 0,
-  },
-  {
-    id: "prop-4",
-    title: "Cross-Chain Interoperability Protocols: A Comparative Analysis",
-    abstract: "An in-depth comparison of various cross-chain communication protocols and their security implications.",
-    author: "Anonymous",
-    date: "2024-01-05",
-    status: "Published",
-    reviews: 5,
-    score: 9.0,
-    field: "Blockchain",
-    citations: 8,
-  },
-  {
-    id: "prop-5",
-    title: "Quantum-Resistant Cryptographic Algorithms for Blockchain",
-    abstract:
-      "This paper evaluates post-quantum cryptographic algorithms and their suitability for blockchain applications.",
-    author: "Anonymous",
-    date: "2024-04-01",
-    status: "Under Review",
-    reviews: 3,
-    score: 8.0,
-    field: "Cryptography",
-    citations: 0,
-  },
-]
+import { useWallet } from "@/components/wallet-provider"
+import { useToast } from "@/components/ui/use-toast"
+import { useSignAndExecuteTransaction } from '@mysten/dapp-kit'
+import { useCurrentAccount } from '@mysten/dapp-kit'
+import { fetchPapers, Paper } from "@/services/blockchain-service"
+import { RESEARCH_DOMAINS } from "@/utils/zk-utils"
 
 export default function ProposalsPage() {
+  const { connected } = useWallet()
+  const currentAccount = useCurrentAccount()
+  const { mutateAsync: signAndExecuteTransactionBlock } = useSignAndExecuteTransaction()
+  const { toast } = useToast()
+  
   const [searchQuery, setSearchQuery] = useState("")
   const [statusFilter, setStatusFilter] = useState("all")
   const [fieldFilter, setFieldFilter] = useState("all")
   const [activeTab, setActiveTab] = useState("all")
+  const [loading, setLoading] = useState(true)
+  const [proposals, setProposals] = useState<Paper[]>([])
+
+  // Fetch papers from blockchain
+  useEffect(() => {
+    async function fetchData() {
+      try {
+        setLoading(true)
+        
+        // Fetch all papers
+        const papers = await fetchPapers()
+        setProposals(papers)
+      } catch (error) {
+        console.error("Error fetching papers:", error)
+        toast({
+          title: "Error",
+          description: "Failed to fetch papers from the blockchain.",
+          variant: "destructive",
+        })
+      } finally {
+        setLoading(false)
+      }
+    }
+    
+    fetchData()
+  }, [toast])
 
   // Filter proposals based on search query and filters
   const filteredProposals = proposals.filter((proposal) => {
@@ -101,6 +70,16 @@ export default function ProposalsPage() {
 
     return matchesSearch && matchesStatus && matchesField && matchesTab
   })
+
+  // Show loading state while fetching data
+  if (loading) {
+    return (
+      <div className="container py-8 flex flex-col items-center justify-center min-h-[60vh]">
+        <Loader2 className="h-12 w-12 animate-spin text-teal-500 mb-4" />
+        <p className="text-lg text-muted-foreground">Loading research papers...</p>
+      </div>
+    )
+  }
 
   return (
     <div className="container py-8">
@@ -149,10 +128,9 @@ export default function ProposalsPage() {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All Fields</SelectItem>
-                <SelectItem value="blockchain">Blockchain</SelectItem>
-                <SelectItem value="cryptography">Cryptography</SelectItem>
-                <SelectItem value="computer science">Computer Science</SelectItem>
-                <SelectItem value="economics">Economics</SelectItem>
+                {RESEARCH_DOMAINS.map((domain, index) => (
+                  <SelectItem key={index} value={domain.toLowerCase()}>{domain}</SelectItem>
+                ))}
               </SelectContent>
             </Select>
           </div>

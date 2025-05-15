@@ -12,12 +12,18 @@ import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { useToast } from "@/components/ui/use-toast"
 import { useWallet } from "@/components/wallet-provider"
+import { useSignAndExecuteTransaction } from '@mysten/dapp-kit'
+import { useCurrentAccount } from '@mysten/dapp-kit'
 import { Loader2, Upload } from "lucide-react"
+import { submitPaper } from "@/services/blockchain-service"
+import { RESEARCH_DOMAINS } from "@/utils/zk-utils"
 
 export default function NewProposalPage() {
   const router = useRouter()
   const { toast } = useToast()
   const { connected } = useWallet()
+  const currentAccount = useCurrentAccount()
+  const { mutateAsync: signAndExecuteTransactionBlock } = useSignAndExecuteTransaction()
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [formData, setFormData] = useState({
     title: "",
@@ -25,6 +31,7 @@ export default function NewProposalPage() {
     field: "",
     keywords: "",
     file: null as File | null,
+    content: "", // This will store the file content as text
   })
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
@@ -36,16 +43,49 @@ export default function NewProposalPage() {
     setFormData((prev) => ({ ...prev, [name]: value }))
   }
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
-      setFormData((prev) => ({ ...prev, file: e.target.files![0] }))
+      const file = e.target.files[0];
+      
+      // Read the file content
+      try {
+        const content = await readFileAsText(file);
+        setFormData((prev) => ({ 
+          ...prev, 
+          file: file,
+          content: content
+        }));
+      } catch (error) {
+        console.error("Error reading file:", error);
+        toast({
+          title: "File Error",
+          description: "Could not read the file. Please try again with a different file.",
+          variant: "destructive",
+        });
+      }
     }
   }
+  
+  // Helper function to read file as text
+  const readFileAsText = (file: File): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        if (event.target?.result) {
+          resolve(event.target.result as string);
+        } else {
+          reject(new Error("Failed to read file"));
+        }
+      };
+      reader.onerror = () => reject(reader.error);
+      reader.readAsText(file);
+    });
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
 
-    if (!connected) {
+    if (!connected || !currentAccount) {
       toast({
         title: "Wallet Connection Required",
         description: "Please connect your wallet to submit a proposal.",
@@ -55,7 +95,7 @@ export default function NewProposalPage() {
     }
 
     // Validate form
-    if (!formData.title || !formData.abstract || !formData.field || !formData.file) {
+    if (!formData.title || !formData.abstract || !formData.field || !formData.file || !formData.content) {
       toast({
         title: "Missing Information",
         description: "Please fill in all required fields and upload your paper.",
@@ -67,19 +107,33 @@ export default function NewProposalPage() {
     setIsSubmitting(true)
 
     try {
-      // Simulate API call
-      await new Promise((resolve) => setTimeout(resolve, 2000))
-
-      toast({
-        title: "Proposal Submitted",
-        description: "Your research proposal has been submitted successfully.",
-      })
-
-      router.push("/dashboard")
+      // Submit paper to blockchain
+      const txDigest = await submitPaper(
+        signAndExecuteTransactionBlock,
+        formData.title,
+        formData.abstract,
+        formData.content,
+        formData.field
+      );
+      
+      if (txDigest) {
+        toast({
+          title: "Proposal Submitted",
+          description: "Your research proposal has been submitted to the blockchain successfully.",
+        });
+        
+        console.log("Transaction digest:", txDigest);
+        
+        // Navigate to dashboard
+        router.push("/dashboard");
+      } else {
+        throw new Error("Transaction failed");
+      }
     } catch (error) {
+      console.error("Error submitting paper:", error);
       toast({
         title: "Submission Failed",
-        description: "There was an error submitting your proposal. Please try again.",
+        description: "There was an error submitting your proposal to the blockchain. Please try again.",
         variant: "destructive",
       })
     } finally {
@@ -133,11 +187,9 @@ export default function NewProposalPage() {
                       <SelectValue placeholder="Select field" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="blockchain">Blockchain</SelectItem>
-                      <SelectItem value="cryptography">Cryptography</SelectItem>
-                      <SelectItem value="computer-science">Computer Science</SelectItem>
-                      <SelectItem value="economics">Economics</SelectItem>
-                      <SelectItem value="mathematics">Mathematics</SelectItem>
+                      {RESEARCH_DOMAINS.map((domain, index) => (
+                        <SelectItem key={index} value={domain.toLowerCase()}>{domain}</SelectItem>
+                      ))}
                       <SelectItem value="other">Other</SelectItem>
                     </SelectContent>
                   </Select>

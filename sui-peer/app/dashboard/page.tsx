@@ -1,69 +1,77 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { BarChart, BookOpen, FileText, FilePlus, MessageSquare, Star, TrendingUp } from "lucide-react"
+import { BarChart, BookOpen, FileText, FilePlus, MessageSquare, Star, TrendingUp, Loader2 } from "lucide-react"
 import { Progress } from "@/components/ui/progress"
 import { useWallet } from "@/components/wallet-provider"
 import { useToast } from "@/components/ui/use-toast"
+import { useSignAndExecuteTransaction } from '@mysten/dapp-kit'
+import { useCurrentAccount } from '@mysten/dapp-kit'
+import { fetchPapers, fetchResearcherProfile, Paper, Researcher } from "@/services/blockchain-service"
 
 export default function DashboardPage() {
   const { connected } = useWallet()
+  const currentAccount = useCurrentAccount()
+  const { mutateAsync: signAndExecuteTransactionBlock } = useSignAndExecuteTransaction()
   const { toast } = useToast()
   const [activeTab, setActiveTab] = useState("overview")
+  const [loading, setLoading] = useState(true)
+  const [userStats, setUserStats] = useState<Researcher | null>(null)
+  const [recentPublications, setRecentPublications] = useState<Paper[]>([])
+  const [pendingReviews, setPendingReviews] = useState<any[]>([])
 
-  // Mock data
-  const userStats = {
-    reputation: 78,
-    publications: 5,
-    reviews: 12,
-    citations: 34,
-  }
-
-  const recentPublications = [
-    {
-      id: "pub-1",
-      title: "Decentralized Consensus Mechanisms in Blockchain Networks",
-      status: "Published",
-      date: "2023-12-15",
-      reviews: 4,
-      score: 8.5,
-    },
-    {
-      id: "pub-2",
-      title: "Zero-Knowledge Proofs for Privacy-Preserving Authentication",
-      status: "Under Review",
-      date: "2024-02-20",
-      reviews: 2,
-      score: 7.0,
-    },
-    {
-      id: "pub-3",
-      title: "Scalability Solutions for Next-Generation Blockchain Platforms",
-      status: "Draft",
-      date: "2024-04-01",
-      reviews: 0,
-      score: 0,
-    },
-  ]
-
-  const pendingReviews = [
-    {
-      id: "rev-1",
-      title: "Quantum-Resistant Cryptographic Algorithms for Blockchain",
-      author: "Anonymous",
-      deadline: "2024-05-15",
-    },
-    {
-      id: "rev-2",
-      title: "Cross-Chain Interoperability Protocols: A Comparative Analysis",
-      author: "Anonymous",
-      deadline: "2024-05-20",
-    },
-  ]
+  // Fetch user data from blockchain
+  useEffect(() => {
+    async function fetchData() {
+      if (connected && currentAccount) {
+        try {
+          setLoading(true)
+          
+          // Fetch researcher profile
+          const researcher = await fetchResearcherProfile(currentAccount.address)
+          setUserStats(researcher)
+          
+          // Fetch papers
+          const papers = await fetchPapers(currentAccount.address)
+          setRecentPublications(papers)
+          
+          // For pending reviews, we would fetch from blockchain
+          // For now, using mock data
+          setPendingReviews([
+            {
+              id: "0x6789012345abcdef6789012345abcdef6789012345abcdef6789012345abcdef",
+              title: "Quantum-Resistant Cryptographic Algorithms for Blockchain",
+              author: "Anonymous",
+              deadline: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+            },
+            {
+              id: "0x7890123456abcdef7890123456abcdef7890123456abcdef7890123456abcdef",
+              title: "Cross-Chain Interoperability Protocols: A Comparative Analysis",
+              author: "Anonymous",
+              deadline: new Date(Date.now() + 10 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+            },
+          ])
+        } catch (error) {
+          console.error("Error fetching blockchain data:", error)
+          toast({
+            title: "Error",
+            description: "Failed to fetch your data from the blockchain.",
+            variant: "destructive",
+          })
+        } finally {
+          setLoading(false)
+        }
+      } else {
+        setLoading(false)
+      }
+    }
+    
+    fetchData()
+  }, [connected, currentAccount, toast])
 
   const handleNewPublication = () => {
     if (!connected) {
@@ -77,6 +85,36 @@ export default function DashboardPage() {
 
     // Navigate to new publication page
     window.location.href = "/proposals/new"
+  }
+
+  // Show loading state while fetching data
+  if (loading) {
+    return (
+      <div className="container py-8 flex flex-col items-center justify-center min-h-[60vh]">
+        <Loader2 className="h-12 w-12 animate-spin text-teal-500 mb-4" />
+        <p className="text-lg text-muted-foreground">Loading your dashboard data...</p>
+      </div>
+    )
+  }
+
+  // Show message if not connected
+  if (!connected) {
+    return (
+      <div className="container py-8">
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
+          <p className="text-muted-foreground">Connect your wallet to view your research dashboard</p>
+        </div>
+        
+        <div className="bg-muted p-8 rounded-lg text-center">
+          <FileText className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
+          <h2 className="text-xl font-semibold mb-2">Wallet Not Connected</h2>
+          <p className="text-muted-foreground mb-4">
+            Please connect your wallet to access your research dashboard, manage publications, and submit reviews.
+          </p>
+        </div>
+      </div>
+    )
   }
 
   return (
@@ -99,9 +137,11 @@ export default function DashboardPage() {
             <TrendingUp className="h-4 w-4 text-teal-500" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{userStats.reputation}</div>
-            <Progress value={userStats.reputation} className="mt-2 h-2" />
-            <p className="mt-2 text-xs text-muted-foreground">+12 from last month</p>
+            <div className="text-2xl font-bold">{userStats?.reputation || 0}</div>
+            <Progress value={userStats?.reputation || 0} max={100} className="mt-2 h-2" />
+            <p className="mt-2 text-xs text-muted-foreground">
+              On-chain reputation score from the SUI blockchain
+            </p>
           </CardContent>
         </Card>
         <Card>
@@ -110,8 +150,10 @@ export default function DashboardPage() {
             <FileText className="h-4 w-4 text-teal-500" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{userStats.publications}</div>
-            <p className="mt-2 text-xs text-muted-foreground">+1 from last month</p>
+            <div className="text-2xl font-bold">{userStats?.publications || 0}</div>
+            <p className="mt-2 text-xs text-muted-foreground">
+              Research papers published on-chain
+            </p>
           </CardContent>
         </Card>
         <Card>
@@ -120,8 +162,10 @@ export default function DashboardPage() {
             <MessageSquare className="h-4 w-4 text-teal-500" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{userStats.reviews}</div>
-            <p className="mt-2 text-xs text-muted-foreground">+3 from last month</p>
+            <div className="text-2xl font-bold">{userStats?.reviews || 0}</div>
+            <p className="mt-2 text-xs text-muted-foreground">
+              Peer reviews submitted on-chain
+            </p>
           </CardContent>
         </Card>
         <Card>
@@ -130,8 +174,10 @@ export default function DashboardPage() {
             <BookOpen className="h-4 w-4 text-teal-500" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{userStats.citations}</div>
-            <p className="mt-2 text-xs text-muted-foreground">+8 from last month</p>
+            <div className="text-2xl font-bold">{userStats?.citations || 0}</div>
+            <p className="mt-2 text-xs text-muted-foreground">
+              Times your papers have been cited
+            </p>
           </CardContent>
         </Card>
       </div>
@@ -152,54 +198,70 @@ export default function DashboardPage() {
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
-                  {recentPublications.map((pub) => (
-                    <div
-                      key={pub.id}
-                      className="flex flex-col justify-between rounded-lg border p-4 md:flex-row md:items-center"
-                    >
-                      <div className="mb-2 md:mb-0">
-                        <Link href={`/proposals/${pub.id}`} className="font-medium hover:underline">
-                          {pub.title}
-                        </Link>
-                        <div className="mt-1 flex items-center gap-2 text-sm text-muted-foreground">
-                          <span
-                            className={`inline-flex items-center rounded-full px-2 py-1 text-xs font-medium ${
-                              pub.status === "Published"
-                                ? "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300"
-                                : pub.status === "Under Review"
-                                  ? "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300"
-                                  : "bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-300"
-                            }`}
-                          >
-                            {pub.status}
-                          </span>
-                          <span>Submitted on {pub.date}</span>
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-4">
-                        <div className="flex items-center gap-1">
-                          <MessageSquare className="h-4 w-4 text-muted-foreground" />
-                          <span className="text-sm">{pub.reviews}</span>
-                        </div>
-                        {pub.score > 0 && (
-                          <div className="flex items-center gap-1">
-                            <Star className="h-4 w-4 text-yellow-500" />
-                            <span className="text-sm">{pub.score}</span>
+                  {recentPublications.length > 0 ? (
+                    recentPublications.map((pub) => (
+                      <div
+                        key={pub.id}
+                        className="flex flex-col justify-between rounded-lg border p-4 md:flex-row md:items-center"
+                      >
+                        <div className="mb-2 md:mb-0">
+                          <Link href={`/proposals/${pub.id}`} className="font-medium hover:underline">
+                            {pub.title}
+                          </Link>
+                          <div className="mt-1 flex items-center gap-2 text-sm text-muted-foreground">
+                            <span
+                              className={`inline-flex items-center rounded-full px-2 py-1 text-xs font-medium ${
+                                pub.status === "Published"
+                                  ? "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300"
+                                  : pub.status === "Under Review"
+                                    ? "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300"
+                                    : "bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-300"
+                              }`}
+                            >
+                              {pub.status}
+                            </span>
+                            <span>Submitted on {pub.date}</span>
                           </div>
-                        )}
-                        <Button variant="outline" size="sm" asChild>
-                          <Link href={`/proposals/${pub.id}`}>View</Link>
-                        </Button>
+                        </div>
+                        <div className="flex items-center gap-4">
+                          <div className="flex items-center gap-1">
+                            <MessageSquare className="h-4 w-4 text-muted-foreground" />
+                            <span className="text-sm">{pub.reviews}</span>
+                          </div>
+                          {pub.score > 0 && (
+                            <div className="flex items-center gap-1">
+                              <Star className="h-4 w-4 text-yellow-500" />
+                              <span className="text-sm">{pub.score}</span>
+                            </div>
+                          )}
+                          <Button variant="outline" size="sm" asChild>
+                            <Link href={`/proposals/${pub.id}`}>View</Link>
+                          </Button>
+                        </div>
                       </div>
+                    ))
+                  ) : (
+                    <div className="rounded-lg border border-dashed p-8 text-center">
+                      <FileText className="mx-auto h-10 w-10 text-muted-foreground" />
+                      <h3 className="mt-4 text-lg font-medium">No publications yet</h3>
+                      <p className="mt-2 text-sm text-muted-foreground">
+                        You haven't submitted any research papers yet. Click the "New Publication" button to get started.
+                      </p>
+                      <Button className="mt-4 bg-teal-500 hover:bg-teal-600" onClick={handleNewPublication}>
+                        <FilePlus className="mr-2 h-4 w-4" />
+                        Submit Your First Paper
+                      </Button>
                     </div>
-                  ))}
+                  )}
                 </div>
               </CardContent>
-              <CardFooter>
-                <Button variant="outline" asChild className="w-full">
-                  <Link href="/proposals">View All Publications</Link>
-                </Button>
-              </CardFooter>
+              {recentPublications.length > 0 && (
+                <CardFooter>
+                  <Button variant="outline" asChild className="w-full">
+                    <Link href="/proposals">View All Publications</Link>
+                  </Button>
+                </CardFooter>
+              )}
             </Card>
 
             <Card>
@@ -209,33 +271,45 @@ export default function DashboardPage() {
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
-                  {pendingReviews.map((review) => (
-                    <div
-                      key={review.id}
-                      className="flex flex-col justify-between rounded-lg border p-4 md:flex-row md:items-center"
-                    >
-                      <div className="mb-2 md:mb-0">
-                        <Link href={`/reviews/${review.id}`} className="font-medium hover:underline">
-                          {review.title}
-                        </Link>
-                        <div className="mt-1 text-sm text-muted-foreground">
-                          <span>Author: {review.author}</span>
-                          <span className="mx-2">•</span>
-                          <span>Deadline: {review.deadline}</span>
+                  {pendingReviews.length > 0 ? (
+                    pendingReviews.map((review) => (
+                      <div
+                        key={review.id}
+                        className="flex flex-col justify-between rounded-lg border p-4 md:flex-row md:items-center"
+                      >
+                        <div className="mb-2 md:mb-0">
+                          <Link href={`/proposals/${review.id}`} className="font-medium hover:underline">
+                            {review.title}
+                          </Link>
+                          <div className="mt-1 text-sm text-muted-foreground">
+                            <span>Author: {review.author}</span>
+                            <span className="mx-2">•</span>
+                            <span>Deadline: {review.deadline}</span>
+                          </div>
                         </div>
+                        <Button variant="outline" size="sm" asChild>
+                          <Link href={`/proposals/${review.id}`}>Review</Link>
+                        </Button>
                       </div>
-                      <Button variant="outline" size="sm" asChild>
-                        <Link href={`/reviews/${review.id}`}>Review</Link>
-                      </Button>
+                    ))
+                  ) : (
+                    <div className="rounded-lg border border-dashed p-8 text-center">
+                      <MessageSquare className="mx-auto h-10 w-10 text-muted-foreground" />
+                      <h3 className="mt-4 text-lg font-medium">No pending reviews</h3>
+                      <p className="mt-2 text-sm text-muted-foreground">
+                        You don't have any papers assigned for review at the moment.
+                      </p>
                     </div>
-                  ))}
+                  )}
                 </div>
               </CardContent>
-              <CardFooter>
-                <Button variant="outline" asChild className="w-full">
-                  <Link href="/reviews">View All Reviews</Link>
-                </Button>
-              </CardFooter>
+              {pendingReviews.length > 0 && (
+                <CardFooter>
+                  <Button variant="outline" asChild className="w-full">
+                    <Link href="/proposals">Browse Papers to Review</Link>
+                  </Button>
+                </CardFooter>
+              )}
             </Card>
           </TabsContent>
           <TabsContent value="publications">
