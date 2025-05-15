@@ -1,0 +1,24 @@
+{
+  "name": "suipeer-zk-circuits",
+  "version": "1.0.0",
+  "description": "Zero-knowledge circuits for SuiPeer platform",
+  "main": "index.js",
+  "scripts": {
+    "compile": "node compile-circuits.js",
+    "deploy": "node deploy-artifacts.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "zk",
+    "circom",
+    "zero-knowledge",
+    "sui",
+    "blockchain"
+  ],
+  "author": "SuiPeer Team",
+  "license": "Apache-2.0",
+  "dependencies": {
+    "circomlib": "^2.0.5",
+    "snarkjs": "^0.7.0"
+  }
+}
